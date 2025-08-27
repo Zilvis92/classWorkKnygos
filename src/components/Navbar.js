@@ -1,6 +1,7 @@
 import React, {useContext} from 'react';
-import { ThemeContext } from '../contexts/ThemeContext';
-import { AuthContext } from '../contexts/AuthContext';
+import { BookContext }  from '../contexts/BookContext';
+// import { ThemeContext } from '../contexts/ThemeContext';
+// import { AuthContext } from '../contexts/AuthContext';
 
 // class Navbar extends Component {
 //     static contextType = ThemeContext;
@@ -44,24 +45,35 @@ import { AuthContext } from '../contexts/AuthContext';
 //     }
 // }
  
+// const Navbar = () => {
+//     const {isAuthenticated, toggleAuth} = useContext(AuthContext);
+//     const { isLightTheme, light, dark } = useContext(ThemeContext);
+//     const theme = isLightTheme ? light : dark
+
+//     return (
+//         <nav style={{ background: theme.ui, color: theme.syntax }}>
+//             <h1>Context App</h1>
+//             <div onClick={toggleAuth}>
+//                 {isAuthenticated ? 'Logged in' : 'Logged out'}
+//             </div>
+//             <ul>
+//                 <li>Home</li>
+//                 <li>About</li>
+//                 <li>Contact</li>
+//             </ul>
+//         </nav>
+//     )
+// }
+
 const Navbar = () => {
-    const {isAuthenticated, toggleAuth} = useContext(AuthContext);
-    const { isLightTheme, light, dark } = useContext(ThemeContext);
-    const theme = isLightTheme ? light : dark
+    const {books} = useContext(BookContext);
 
     return (
-        <nav style={{ background: theme.ui, color: theme.syntax }}>
-            <h1>Context App</h1>
-            <div onClick={toggleAuth}>
-                {isAuthenticated ? 'Logged in' : 'Logged out'}
-            </div>
-            <ul>
-                <li>Home</li>
-                <li>About</li>
-                <li>Contact</li>
-            </ul>
-        </nav>
-    )
-}
+        <div className="navbar">
+            <h1>Mano skaitinių sąrašas</h1>
+            <p>Šiuo metu turiu {books.length} knygas, kurias noriu perskaityti</p>
+        </div>
+    );
+};
 
 export default Navbar;
