@@ -7,6 +7,10 @@ const BookForm = () => {
     const [author, setAuthor] = useState('');
     const handleSubmit = (e) => {
         e.preventDefault();
+        // Papildoma validacija
+        if (!title.trim() || !author.trim()) {
+            return; // Sustabdo formos siuntimą jei laukai tušti
+        }
         addBook(title, author);
         setTitle('');
         setAuthor('');
