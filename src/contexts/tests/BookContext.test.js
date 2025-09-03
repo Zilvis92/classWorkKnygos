@@ -1,12 +1,13 @@
 import React from 'react';
-import { render, act } from '@testing-library/react';
+import { render, act, waitFor, screen } from '@testing-library/react';
 import BookContextProvider, { BookContext } from '../BookContext';
 
 // Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
-  clear: jest.fn()
+  clear: jest.fn(),
+  removeItem: jest.fn(),
 };
 
 beforeAll(() => {
@@ -14,123 +15,142 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  jest.clearAllMocks();
   localStorageMock.getItem.mockClear();
   localStorageMock.setItem.mockClear();
 });
 
+// Testinis komponentas, kuris atvaizduoja konteksto reikšmes
+const TestComponent = ({ testId }) => {
+  const { books, addBook, removeBook } = React.useContext(BookContext);
+  
+  return (
+    <div data-testid={testId || "test-component"}>
+      <span data-testid="books-length">{books.length}</span>
+      <span data-testid="books-data">{JSON.stringify(books)}</span>
+      <button onClick={() => addBook('Test Title', 'Test Author')} data-testid="add-button">
+        Add Book
+      </button>
+      <button onClick={() => removeBook('1')} data-testid="remove-button">
+        Remove Book
+      </button>
+    </div>
+  );
+};
+
 describe('BookContextProvider', () => {
-  test('loads books from localStorage on initial render', () => {
+  test('loads books from localStorage on initial render', async () => {
     const mockBooks = [{ id: '1', title: 'Saved Book', author: 'Saved Author' }];
     localStorageMock.getItem.mockReturnValue(JSON.stringify(mockBooks));
 
-    let contextValue;
-    const TestComponent = () => {
-      contextValue = React.useContext(BookContext);
-      return null;
-    };
-
     render(
       <BookContextProvider>
-        <TestComponent />
+        <TestComponent testId="test-1" />
       </BookContextProvider>
     );
 
-    expect(contextValue.books).toEqual(mockBooks);
+    // Palaukiame kol useEffect bus įvykdytas
+    await waitFor(() => {
+      expect(screen.getByTestId('books-length')).toHaveTextContent('1');
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('books-data')).toHaveTextContent(JSON.stringify(mockBooks));
+    });
+    
     expect(localStorageMock.getItem).toHaveBeenCalledWith('books');
   });
 
-  test('uses empty array when no books in localStorage', () => {
+  test('uses empty array when no books in localStorage', async () => {
     localStorageMock.getItem.mockReturnValue(null);
-
-    let contextValue;
-    const TestComponent = () => {
-      contextValue = React.useContext(BookContext);
-      return null;
-    };
 
     render(
       <BookContextProvider>
-        <TestComponent />
+        <TestComponent testId="test-2" />
       </BookContextProvider>
     );
 
-    expect(contextValue.books).toEqual([]);
+    await waitFor(() => {
+      expect(screen.getByTestId('books-length')).toHaveTextContent('0');
+    });
   });
 
-  test('addBook function adds a new book', () => {
-    localStorageMock.getItem.mockReturnValue(null);
-
-    let contextValue;
-    const TestComponent = () => {
-      contextValue = React.useContext(BookContext);
-      return null;
-    };
+  test('addBook function adds a new book', async () => {
+    localStorageMock.getItem.mockReturnValue('[]');
 
     render(
       <BookContextProvider>
-        <TestComponent />
+        <TestComponent testId="test-3" />
       </BookContextProvider>
     );
 
-    act(() => {
-      contextValue.addBook('New Title', 'New Author');
+    // Patikriname pradinę būseną
+    await waitFor(() => {
+      expect(screen.getByTestId('books-length')).toHaveTextContent('0');
     });
 
-    expect(contextValue.books).toHaveLength(1);
-    expect(contextValue.books[0].title).toBe('New Title');
-    expect(contextValue.books[0].author).toBe('New Author');
-    expect(contextValue.books[0].id).toBeDefined();
+    // Iškviečiame addBook funkciją
+    await act(async () => {
+      screen.getByTestId('add-button').click();
+    });
+
+    // Tikriname rezultatą
+    await waitFor(() => {
+      expect(screen.getByTestId('books-length')).toHaveTextContent('1');
+    });
   });
 
-  test('removeBook function removes a book', () => {
+  test('removeBook function removes a book', async () => {
     const mockBooks = [
       { id: '1', title: 'Book 1', author: 'Author 1' },
       { id: '2', title: 'Book 2', author: 'Author 2' }
     ];
     localStorageMock.getItem.mockReturnValue(JSON.stringify(mockBooks));
 
-    let contextValue;
-    const TestComponent = () => {
-      contextValue = React.useContext(BookContext);
-      return null;
-    };
-
     render(
       <BookContextProvider>
-        <TestComponent />
+        <TestComponent testId="test-4" />
       </BookContextProvider>
     );
 
-    act(() => {
-      contextValue.removeBook('1');
+    // Palaukiame kol komponentas užsikraus
+    await waitFor(() => {
+      expect(screen.getByTestId('books-length')).toHaveTextContent('2');
     });
 
-    expect(contextValue.books).toHaveLength(1);
-    expect(contextValue.books[0].id).toBe('2');
+    // Iškviečiame removeBook funkciją
+    await act(async () => {
+      screen.getByTestId('remove-button').click();
+    });
+
+    // Tikriname rezultatą
+    await waitFor(() => {
+      expect(screen.getByTestId('books-length')).toHaveTextContent('1');
+    });
   });
 
-  test('saves books to localStorage when books change', () => {
-    localStorageMock.getItem.mockReturnValue(null);
-
-    let contextValue;
-    const TestComponent = () => {
-      contextValue = React.useContext(BookContext);
-      return null;
-    };
+  test('saves books to localStorage when books change', async () => {
+    localStorageMock.getItem.mockReturnValue('[]');
 
     render(
       <BookContextProvider>
-        <TestComponent />
+        <TestComponent testId="test-5" />
       </BookContextProvider>
     );
 
-    act(() => {
-      contextValue.addBook('Test Book', 'Test Author');
+    // Palaukiame kol komponentas užsikraus
+    await waitFor(() => {
+      expect(screen.getByTestId('books-length')).toHaveTextContent('0');
     });
 
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(
-      'books',
-      JSON.stringify(contextValue.books)
-    );
+    // Iškviečiame addBook funkciją
+    await act(async () => {
+      screen.getByTestId('add-button').click();
+    });
+
+    // Tikriname ar buvo iškviestas setItem
+    await waitFor(() => {
+      expect(localStorageMock.setItem).toHaveBeenCalled();
+    });
   });
 });

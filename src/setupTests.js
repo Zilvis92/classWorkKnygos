@@ -13,5 +13,9 @@ global.localStorage = localStorageMock;
 
 // Mock UUID
 jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'mocked-uuid-123'),
+  v4: jest.fn()
+    .mockReturnValueOnce('mocked-uuid-1')
+    .mockReturnValueOnce('mocked-uuid-2')
+    .mockReturnValueOnce('mocked-uuid-3')
+    .mockReturnValue('mocked-uuid-default')
 }));

@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { BookContext } from '../../contexts/BookContext';
 import BookList from '../Knygos';
-import { renderWithContext } from '../../../test-utils';
 
 describe('BookList', () => {
   test('renders empty state when no books', () => {
-    renderWithContext(<BookList />, { books: [] });
+    render(
+      <BookContext.Provider value={{ books: [], addBook: jest.fn(), removeBook: jest.fn() }}>
+        <BookList />
+      </BookContext.Provider>
+    );
 
     expect(screen.getByText('Nėra skaitinių! Labas, laisvalaiki!')).toBeInTheDocument();
   });
@@ -16,7 +20,11 @@ describe('BookList', () => {
       { id: '2', title: 'Book 2', author: 'Author 2' }
     ];
 
-    renderWithContext(<BookList />, { books: mockBooks });
+    render(
+      <BookContext.Provider value={{ books: mockBooks, addBook: jest.fn(), removeBook: jest.fn() }}>
+        <BookList />
+      </BookContext.Provider>
+    );
 
     expect(screen.getByText('Book 1')).toBeInTheDocument();
     expect(screen.getByText('Author 1')).toBeInTheDocument();
@@ -27,7 +35,11 @@ describe('BookList', () => {
   test('does not render empty state when books exist', () => {
     const mockBooks = [{ id: '1', title: 'Book 1', author: 'Author 1' }];
 
-    renderWithContext(<BookList />, { books: mockBooks });
+    render(
+      <BookContext.Provider value={{ books: mockBooks, addBook: jest.fn(), removeBook: jest.fn() }}>
+        <BookList />
+      </BookContext.Provider>
+    );
 
     expect(screen.queryByText('Nėra skaitinių! Labas, laisvalaiki!')).not.toBeInTheDocument();
   });
